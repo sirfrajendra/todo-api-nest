@@ -25,10 +25,24 @@ export class TodoService {
 
     const skip = (page - 1) * limit;
 
-    return this.prisma.todo.findMany({
-      skip,
-      take: limit,
-    });
+    const [data, total] = await Promise.all([
+      this.prisma.todo.findMany({
+        skip,
+        take: limit,
+      }),
+
+      this.prisma.todo.count(),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      page,
+      limit,
+      total,
+      totalPages,
+    };
   }
 
   async findOne(id: string) {
