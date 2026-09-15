@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { CreateTodoDto } from '../dto/create-todo.dto.js';
+import { GetTodosQueryDto } from '../dto/get-todos-query.dto.js';
 import { UpdateTodoDto } from '../dto/update-todo.dto.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -18,8 +19,16 @@ export class TodoService {
     });
   }
   
-  async findAll() {
-    return this.prisma.todo.findMany();
+  async findAll(query: GetTodosQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+
+    const skip = (page - 1) * limit;
+
+    return this.prisma.todo.findMany({
+      skip,
+      take: limit,
+    });
   }
 
   async findOne(id: string) {
