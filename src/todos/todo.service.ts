@@ -10,23 +10,25 @@ import { Prisma } from '../generated/prisma/client.js';
 export class TodoService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createTodo(body: CreateTodoDto) {
+  async createTodo(userId: number, body: CreateTodoDto) {
     return this.prisma.todo.create({
       data: {
         title: body.title,
         description: body.description,
         completed: body.completed,
+        userId,
       },
     });
   }
 
-  async findAll(query: GetTodosQueryDto) {
+  async findAll(userId: number, query: GetTodosQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
 
     const skip = (page - 1) * limit;
 
     const where: Prisma.TodoWhereInput = {
+      userId,
       ...(query.completed !== undefined
         ? {
             completed: query.completed,
@@ -76,10 +78,11 @@ export class TodoService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(userId: number, id: string) {
     const todo = await this.prisma.todo.findUnique({
       where: {
         id: Number(id),
+        userId,
       },
     });
 
@@ -90,10 +93,11 @@ export class TodoService {
     return todo;
   }
 
-  async update(id: string, body: UpdateTodoDto) {
+  async update(userId: number, id: string, body: UpdateTodoDto) {
     const todo = await this.prisma.todo.findUnique({
       where: {
         id: Number(id),
+        userId,
       },
     });
 
@@ -109,10 +113,11 @@ export class TodoService {
     });
   }
 
-  async remove(id: string) {
+  async remove(userId: number, id: string) {
     const todo = await this.prisma.todo.findUnique({
       where: {
         id: Number(id),
+        userId,
       },
     });
 
