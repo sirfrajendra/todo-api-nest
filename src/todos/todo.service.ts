@@ -4,6 +4,7 @@ import { CreateTodoDto } from '../dto/create-todo.dto.js';
 import { GetTodosQueryDto } from '../dto/get-todos-query.dto.js';
 import { UpdateTodoDto } from '../dto/update-todo.dto.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { Prisma } from '../generated/prisma/client.js';
 
 @Injectable()
 export class TodoService {
@@ -18,20 +19,50 @@ export class TodoService {
       },
     });
   }
-  
+
   async findAll(query: GetTodosQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
 
     const skip = (page - 1) * limit;
 
+    const where: Prisma.TodoWhereInput = {
+      ...(query.completed !== undefined
+        ? {
+            completed: query.completed,
+          }
+        : {}),
+
+      ...(query.search
+        ? {
+            OR: [
+              {
+                title: {
+                  contains: query.search,
+                  mode: 'insensitive',
+                },
+              },
+              {
+                description: {
+                  contains: query.search,
+                  mode: 'insensitive',
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
     const [data, total] = await Promise.all([
       this.prisma.todo.findMany({
+        where,
         skip,
         take: limit,
       }),
 
-      this.prisma.todo.count(),
+      this.prisma.todo.count({
+        where,
+      }),
     ]);
 
     const totalPages = Math.ceil(total / limit);
